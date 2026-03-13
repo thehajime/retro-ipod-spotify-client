@@ -18,7 +18,7 @@ import argparse
 LARGEFONT =("ChicagoFLF", 90) 
 MED_FONT =("ChicagoFLF", 70) 
 SCALE = 1
-SPOT_GREEN = "#1DB954"
+SPOT_GREEN = "#FFC72E" #255,199,46
 SPOT_BLACK = "#191414"
 SPOT_WHITE = "#FFFFFF"
 
@@ -27,13 +27,14 @@ UDP_PORT = 9090
 
 DIVIDER_HEIGHT = 3
 
-UP_KEY_CODE = 8255233 if platform == "darwin" else 111
-DOWN_KEY_CODE = 8320768 if platform == "darwin" else 116
-LEFT_KEY_CODE = 8124162 if platform == "darwin" else 113
-RIGHT_KEY_CODE = 8189699 if platform == "darwin" else 114
-PREV_KEY_CODE = 2818092 if platform == "darwin" else 0
-NEXT_KEY_CODE = 3080238 if platform == "darwin" else 0
-PLAY_KEY_CODE = 3211296 if platform == "darwin" else 0
+UP_KEY_CODE = 2097215233 if platform == "darwin" else 116
+DOWN_KEY_CODE = 2113992448 if platform == "darwin" else 111
+LEFT_KEY_CODE =  2063660802 if platform == "darwin" else 113
+RIGHT_KEY_CODE = 2080438019 if platform == "darwin" else 114
+PREV_KEY_CODE = 721420332 if platform == "darwin" else 59
+NEXT_KEY_CODE = 788529198 if platform == "darwin" else 60
+PLAY_KEY_CODE = 822083616 if platform == "darwin" else 65
+
 
 SCREEN_TIMEOUT_SECONDS = 60
 
@@ -89,12 +90,12 @@ class tkinterApp(tk.Tk):
 
         if (platform == 'darwin'):
             self.geometry("320x240")
-            SCALE = 0.3
+            SCALE = 0.22
         else:
             self.attributes('-fullscreen', True)
             SCALE = self.winfo_screenheight() / 930
 
-        LARGEFONT =("ChicagoFLF", int(72 * SCALE))
+        LARGEFONT =("ChicagoFLF", int(66 * SCALE))
         MED_FONT =("ChicagoFLF", int(52 * SCALE))
         # creating a container 
         container = tk.Frame(self)   
@@ -233,17 +234,17 @@ class NowPlayingFrame(tk.Frame):
         contentFrame.grid(row = 2, column = 0, sticky ="nswe")
         contentFrame.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(2, weight=1)
-        self.context_label = tk.Label(contentFrame, text ="", font = MED_FONT, background=SPOT_BLACK, foreground=SPOT_GREEN) 
+        self.context_label = tk.Label(contentFrame, text ="", font = MED_FONT, background=SPOT_BLACK, foreground=SPOT_GREEN)
         self.context_label.grid(row=0, column=0,sticky ="w", padx=int(50 * SCALE))
-        self.artist_label = tk.Label(contentFrame, text ="", font = LARGEFONT, background=SPOT_BLACK, foreground=SPOT_GREEN) 
+        self.artist_label = tk.Label(contentFrame, text ="", font = MED_FONT, background=SPOT_BLACK, foreground=SPOT_GREEN)
         self.artist_label.grid(row=2, column=0,sticky ="we", padx=(10, 30))
-        self.album_label = tk.Label(contentFrame, text ="", font = LARGEFONT, background=SPOT_BLACK, foreground=SPOT_GREEN) 
+        self.album_label = tk.Label(contentFrame, text ="", font = MED_FONT, background=SPOT_BLACK, foreground=SPOT_GREEN)
         self.album_label.grid(row=3, column=0,sticky ="we", padx=(10, 30))
         self.track_label = Marquee(contentFrame, text="")
         self.track_label.grid(row=1, column=0,sticky ="we", padx=(30, 50))
         self.progress_frame = tk.Canvas(contentFrame, height=int(72 * SCALE), bg=SPOT_BLACK, highlightthickness=0)
         self.progress_frame.grid(row=4, column=0,sticky ="we", pady=(int(52 * SCALE), 0), padx=(30, 50))
-        self.frame_img = ImageTk.PhotoImage(flattenAlpha(Image.open('prog_frame.png')))
+
         self.time_frame = tk.Canvas(contentFrame, bg=SPOT_BLACK, highlightthickness=0)
         self.time_frame.grid(row=5, column=0,sticky ="we", padx=0, pady=(10, 0))
         self.time_frame.grid_columnconfigure(0, weight=1)
@@ -259,10 +260,9 @@ class NowPlayingFrame(tk.Frame):
             parent_width = self.winfo_width()
             if parent_width > 2:
                 self.midpoint = (parent_width / 2) - 40
-                self.progress_width = self.frame_img.width()
+                self.progress_width = parent_width
                 self.progress_start_x = self.midpoint - self.progress_width / 2
                 self.progress = self.progress_frame.create_rectangle(self.progress_start_x, 0, self.midpoint, int(72 * SCALE) , fill=SPOT_GREEN)
-                self.progress_frame.create_image(self.midpoint, (self.frame_img.height() - 1)/2, image=self.frame_img)
                 self.inflated = True
         if not now_playing:
             return
@@ -303,21 +303,14 @@ class NowPlayingFrame(tk.Frame):
 class StartPage(tk.Frame): 
     def __init__(self, parent, controller):  
         tk.Frame.__init__(self, parent) 
-        self.green_arrow_image = ImageTk.PhotoImage(flattenAlpha(Image.open('pod_arrow_grn.png')))
-        self.black_arrow_image = ImageTk.PhotoImage(flattenAlpha(Image.open('pod_arrow_blk.png')))
-        self.empty_arrow_image = ImageTk.PhotoImage(flattenAlpha(Image.open('pod_arrow_empty.png')))
-        self.play_image = ImageTk.PhotoImage(flattenAlpha(Image.open('pod_play.png')))
-        self.pause_image = ImageTk.PhotoImage(flattenAlpha(Image.open('pod_pause.png')))
-        self.space_image = ImageTk.PhotoImage(flattenAlpha(Image.open('pod_space.png')))
-        self.wifi_image = ImageTk.PhotoImage(flattenAlpha(Image.open('pod_wifi.png')))
         self.configure(bg=SPOT_BLACK)
         header_container = tk.Canvas(self, bg=SPOT_BLACK, highlightthickness=0, relief='ridge')
         header_container.grid(sticky='we')
         self.header_label = tk.Label(header_container, text ="sPot 2006", font = LARGEFONT, background=SPOT_BLACK, foreground=SPOT_GREEN)
         self.header_label.grid(sticky='we', column=1, row=0, padx=(0, 10))
-        self.play_indicator = tk.Label(header_container, image=self.space_image, background=SPOT_BLACK)
+        self.play_indicator = tk.Label(header_container, text="? ", font = LARGEFONT, background=SPOT_BLACK, foreground=SPOT_GREEN)
         self.play_indicator.grid(sticky='w', column=0, row=0, padx=(70 * SCALE,0))
-        self.wifi_indicator = tk.Label(header_container, image=self.space_image, background=SPOT_BLACK)
+        self.wifi_indicator = tk.Label(header_container, text="-wW", font=LARGEFONT, background=SPOT_BLACK, foreground=SPOT_GREEN)
         self.wifi_indicator.grid(sticky='w', column=2, row=0, padx=(0,90 * SCALE))
         header_container.grid_columnconfigure(1, weight=1)
         self.grid_columnconfigure(0, weight=1)
@@ -344,12 +337,11 @@ class StartPage(tk.Frame):
         self.arrows=[]
         for x in range(6):
             item = tk.Label(listFrame, text =" " + str(x), justify=tk.LEFT, anchor="w", font = LARGEFONT, background=SPOT_BLACK, foreground=SPOT_GREEN, padx=(30 * SCALE))
-            imgLabel = tk.Label(listFrame, image=self.green_arrow_image, background=SPOT_BLACK)
-            imgLabel.image = self.green_arrow_image
-            imgLabel.grid(row=x, column=1, sticky="nsw", padx = (0, 30))
+            label = tk.Label(listFrame, text=" >", font = LARGEFONT, background=SPOT_BLACK, foreground=SPOT_GREEN)
+            label.grid(row=x, column=1, sticky="nsw", padx = (0, 30))
             item.grid(row = x, column = 0, sticky="ew",padx = (10, 0))
             self.listItems.append(item)
-            self.arrows.append(imgLabel)
+            self.arrows.append(label)
         listFrame.grid_columnconfigure(0, weight=1)
         # listFrame.grid_columnconfigure(1, weight=1)
     
@@ -368,14 +360,14 @@ class StartPage(tk.Frame):
     def set_header(self, header, now_playing = None, has_wifi = False):
         truncd_header = header if len(header) < 20 else header[0:17] + "..."
         self.header_label.configure(text=truncd_header)
-        play_image = self.space_image
+        play_text = " "
         if now_playing is not None:
-            play_image = self.play_image if now_playing['is_playing'] else self.pause_image
-        self.play_indicator.configure(image = play_image)
-        self.play_indicator.image = play_image
-        wifi_image = self.wifi_image if has_wifi else self.space_image
-        self.wifi_indicator.configure(image = wifi_image)
-        self.wifi_indicator.image = wifi_image
+            play_text = "▶" if now_playing['is_playing'] else "ll"
+        self.play_indicator.configure(text = play_text)
+        self.play_indicator.text = play_text
+        wifi_text = "W" if has_wifi else "?"
+        self.wifi_indicator.configure(text = wifi_text)
+        self.wifi_indicator.text = wifi_text
     
     def set_list_item(self, index, text, line_type = LINE_NORMAL, show_arrow = False):
         bgColor = SPOT_GREEN if line_type == LINE_HIGHLIGHT else SPOT_BLACK
@@ -385,10 +377,10 @@ class StartPage(tk.Frame):
         self.listItems[index].configure(background=bgColor, foreground=txtColor, text=truncd_text)
         arrow = self.arrows[index]
         arrow.grid(row=index, column=1, sticky="nsw", padx = (0, 30))
-        arrowImg = self.empty_arrow_image if not show_arrow else \
-            (self.black_arrow_image if line_type == LINE_HIGHLIGHT else self.green_arrow_image)
-        arrow.configure(background=bgColor, image=arrowImg)
-        arrow.image = arrowImg
+        if not show_arrow:
+            arrow.configure(text="")
+        else:
+            arrow.configure(text=" >", font = LARGEFONT, background=SPOT_BLACK, foreground=SPOT_GREEN)
 
 def processInput(app, input):
     global wheel_position, last_button, last_interaction
