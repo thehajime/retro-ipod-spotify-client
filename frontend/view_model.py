@@ -381,6 +381,7 @@ class SearchResultsPage(MenuPage):
             return 2
         return 1
 
+# this endpoint is removed 2026/2
 class NewReleasesPage(PlaylistsPage):
     def __init__(self, previous_page):
         super().__init__(previous_page)
@@ -507,7 +508,6 @@ class RootPage(MenuPage):
         self.pages = [
             ArtistsPage(self),
             AlbumsPage(self),
-            NewReleasesPage(self),
             SavedTracksPage(self),
             PlaylistsPage(self),
             ShowsPage(self),

@@ -103,7 +103,7 @@ DATASTORE = datastore.Datastore()
 sp = spotipy.Spotify(auth_manager=SpotifyOAuth(scope=scope))
 
 
-pageSize = 50
+pageSize = 10
 has_internet = False
 
 def check_internet(request):
@@ -121,18 +121,23 @@ def get_playlist(id):
     # TODO optimize query
     results = sp.playlist(id)
     tracks = []
-    for _, item in enumerate(results['tracks']['items']):
-        track = item['track']
-        tracks.append(UserTrack(track['name'], track['artists'][0]['name'], track['album']['name'], track['uri']))
+    if (not 'items' in results):
+        print("may not contains tracks: probably followed playlist ? skipping.")
+        return "", None
+    for _, item in enumerate(results['items']['items']):
+        if item:
+            track = item['item']
+            tracks.append(UserTrack(track['name'], track['artists'][0]['name'], track['album']['name'], track['uri']))
     return (UserPlaylist(results['name'], 0, results['uri'], len(tracks)), tracks) # return playlist index as 0 because it won't have a idx parameter when fetching directly from Spotify (and we don't need it here anyway)
 
 def get_show(id):
     results = sp.show(id)
     show = results['name']
-    publisher = results['publisher']
+    publisher = '(publisher deprecated)'
     episodes = []
     for _, item in enumerate(results['episodes']['items']):
-        episodes.append(UserEpisode(item['name'], publisher, show, item['uri']))
+        if item:
+            episodes.append(UserEpisode(item['name'], publisher, show, item['uri']))
     return (UserShow(results['name'], publisher, len(episodes), results['uri']), episodes)
 
 def get_album(id):
@@ -145,22 +150,29 @@ def get_album(id):
         tracks.append(UserTrack(item['name'], artist, album, item['uri']))
     return (UserAlbum(results['name'], artist, len(tracks), results['uri']), tracks)
 
-def get_playlist_tracks(id):
+def get_playlist_tracks(id, owner):
     tracks = []
-    results = sp.playlist_tracks(id, limit=pageSize)
-    while(results['next']):
-        for _, item in enumerate(results['items']):
-            track = item['track']
-            tracks.append(UserTrack(track['name'], track['artists'][0]['name'], track['album']['name'], track['uri']))
-        results = sp.next(results)
+    me = sp.me()
+    if me['id'] == owner:
+        results = sp.playlist_tracks(id, limit=pageSize)
+        while(results['next']):
+            for _, item in enumerate(results['items']):
+                track = item['item']
+                tracks.append(UserTrack(track['name'], track['artists'][0]['name'], track['album']['name'], track['uri']))
+            results = sp.next(results)
+    else:
+        # XXX: 2603 can't retrieve items of followed playlist... will be fixed
+        #results = sp.playlist(id, fields='items', market="JP")
+        return tracks
+
     for _, item in enumerate(results['items']):
-        track = item['track']
+        track = item['item']
         tracks.append(UserTrack(track['name'], track['artists'][0]['name'], track['album']['name'], track['uri']))
     return tracks
 
 def get_album_tracks(id):
     tracks = []
-    results = sp.playlist_tracks(id, limit=pageSize)
+    results = sp.playlist_items(id, limit=pageSize)
     while(results['next']):
         for _, item in enumerate(results['items']):
             track = item['track']
@@ -190,7 +202,7 @@ def parse_album(album):
     return (UserAlbum(album['name'], artist, len(tracks), album['uri']), tracks)
 
 def parse_show(show):
-    publisher = show['publisher']
+    publisher = 'show'
     episodes = []
     if 'episodes' not in show :
         return get_show(show['id'])
@@ -233,14 +245,14 @@ def refresh_data():
     while(results['next']):
         offset = results['offset']
         for idx, item in enumerate(results['items']):
-            tracks = get_playlist_tracks(item['id'])
+            tracks = get_playlist_tracks(item['id'], item['owner']['id'])
             DATASTORE.setPlaylist(UserPlaylist(item['name'], totalindex, item['uri'], len(tracks)), tracks, index=idx + offset)
             totalindex = totalindex + 1
         results = sp.next(results)
 
     offset = results['offset']
     for idx, item in enumerate(results['items']):
-        tracks = get_playlist_tracks(item['id'])
+        tracks = get_playlist_tracks(item['id'], item['owner']['id'])
         DATASTORE.setPlaylist(UserPlaylist(item['name'], totalindex, item['uri'], len(tracks)), tracks, index=idx + offset)
         totalindex = totalindex + 1
 
@@ -260,13 +272,6 @@ def refresh_data():
         DATASTORE.setAlbum(album, tracks, index=idx + offset)
 
     print("Refreshed user albums")
-
-    results = sp.new_releases(limit=pageSize)
-    for idx, item in enumerate(results['albums']['items']):
-        album, tracks = parse_album(item)
-        DATASTORE.setNewRelease(album, tracks, index=idx)
-
-    print("Refreshed new releases")
 
     results = sp.current_user_saved_shows(limit=pageSize)
     if(len(results['items']) > 0):
@@ -289,7 +294,6 @@ def play_artist(artist_uri, device_id = None):
         device_id = devices[0].id
     response = sp.start_playback(device_id=device_id, context_uri=artist_uri)
     refresh_now_playing()
-    print(response)
 
 def play_track(track_uri, device_id = None):
     print("playing ", track_uri)
@@ -400,20 +404,27 @@ def get_now_playing_episode(response = None):
 
     episode = response['item']
     episode_uri = episode['uri']
-    publisher = episode['show']['publisher']
     now_playing = {
         'name': episode['name'],
         'track_uri': episode_uri,
-        'artist': publisher,
+        'artist': '--',
         'album': episode['show']['name'],
         'duration': episode['duration_ms'],
         'is_playing': response['is_playing'],
         'progress': response['progress_ms'],
-        'context_name': publisher,
+        'context_name': episode['name'],
         'track_index': -1,
         'timestamp': time.time()
     }
-    
+
+    context = response['context']
+    uri = context['uri']
+    show = DATASTORE.getShowUri(uri)
+    episodes = DATASTORE.getShowEpisodes(uri)
+    if (not show):
+        show, episodes = get_show(uri.split(":")[-1])
+        DATASTORE.setShow(show, episodes)
+
     return now_playing
 
 def search(query):
