@@ -56,7 +56,7 @@ def screen_wake():
 def flattenAlpha(img):
     global SCALE
     [img_w, img_h] = img.size
-    img = img.resize((int(img_w * SCALE), int(img_h * SCALE)), Image.ANTIALIAS)
+    img = img.resize((int(img_w * SCALE), int(img_h * SCALE)), Image.Resampling.LANCZOS)
     alpha = img.split()[-1]  # Pull off the alpha layer
     ab = alpha.tobytes()  # Original 8-bit alpha
 
