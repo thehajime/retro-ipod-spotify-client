@@ -197,7 +197,7 @@ int main(void *args){
     gpioSetAlertFunc(DATA_PIN, onDataEdge);
 
     while(1) {
-
+	    usleep(10);
     };
     gpioTerminate();
 }

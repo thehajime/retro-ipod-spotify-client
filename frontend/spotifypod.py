@@ -561,7 +561,7 @@ loop_count = 0
 def app_main_loop():
     global app, page, loop_count, last_interaction, screen_on
     try:
-        read_sockets = select(socket_list, [], [], 0)[0]
+        read_sockets = select(socket_list, [], [], 0.01)[0]
         for socket in read_sockets:
             data = socket.recv(128)
             processInput(app, data)
