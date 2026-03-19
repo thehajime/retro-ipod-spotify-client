@@ -13,8 +13,8 @@ from view_model import *
 from PIL import ImageTk, Image
 from sys import platform
 import os
-   
-  
+import argparse
+
 LARGEFONT =("ChicagoFLF", 90) 
 MED_FONT =("ChicagoFLF", 70) 
 SCALE = 1
@@ -557,6 +557,17 @@ sock.bind((UDP_IP, UDP_PORT))
 sock.setblocking(0)
 socket_list = [sock]
 loop_count = 0
+
+parser = argparse.ArgumentParser(
+    prog="spotifypod",
+    add_help=True,
+)
+
+parser.add_argument('--refresh', action='store_true', help="refresh local cache via Spotify API (takes long)")
+args = parser.parse_args()
+
+if args.refresh:
+    spotify_manager.refresh_data()
 
 def app_main_loop():
     global app, page, loop_count, last_interaction, screen_on
