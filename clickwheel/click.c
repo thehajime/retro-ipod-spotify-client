@@ -12,7 +12,7 @@
 #include <netinet/in.h> 
 
 #define CLOCK_PIN 23
-#define DATA_PIN 25
+#define DATA_PIN 5
 #define HAPTIC_PIN 26
 #define BIT_COUNT 32
 #define PORT 9090 
