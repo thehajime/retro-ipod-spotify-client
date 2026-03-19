@@ -141,6 +141,14 @@ class Datastore():
         pickled_pl = self.r.get("track:"+str(index))
         return pickle.loads(pickled_pl)
 
+    def getSavedTrackIndex(self, uri):
+        tracks = list(self.r.keys("track:*"))
+        for item in tracks:
+            track = pickle.loads(self.r.get(item))
+            if track.uri == uri:
+                return int(str(item.decode()).split(':')[-1])
+        return 0
+
     def setUserDevice(self, device):
         print("device:"+ str(device.id))
         self.r.set("device:"+ str(device.id), pickle.dumps(device))

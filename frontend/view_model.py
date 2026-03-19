@@ -468,9 +468,7 @@ class SingleTrackPage(MenuPage):
 
     def render(self):
         r = super().render()
-        print("render track")
-        context_uri = self.playlist.uri if self.playlist else self.album.uri
-        spotify_manager.play_from_playlist(context_uri, self.track.uri, None)
+        spotify_manager.play_track(self.track.uri, None)
         return r
 
 class SingleEpisodePage(MenuPage):
@@ -488,14 +486,16 @@ class SingleEpisodePage(MenuPage):
 
 class SavedTracksPage(MenuPage):
     def __init__(self, previous_page):
-        super().__init__("Saved Tracks", previous_page, has_sub_page=True)
+        super().__init__("Favorites", previous_page, has_sub_page=True)
 
     def total_size(self):
         return spotify_manager.DATASTORE.getSavedTrackCount()
 
     def page_at(self, index):
         # play track
-        return SingleTrackPage(spotify_manager.DATASTORE.getSavedTrack(index), self)
+        track = spotify_manager.DATASTORE.getSavedTrack(index)
+        command = NowPlayingCommand(lambda: spotify_manager.play_track(track.uri, None))
+        return NowPlayingPage(self, track.title, command)
 
 class PlaceHolderPage(MenuPage):
     def __init__(self, header, previous_page, has_sub_page=True, is_title = False):
@@ -508,6 +508,7 @@ class RootPage(MenuPage):
             ArtistsPage(self),
             AlbumsPage(self),
             NewReleasesPage(self),
+            SavedTracksPage(self),
             PlaylistsPage(self),
             ShowsPage(self),
             SearchPage(self),

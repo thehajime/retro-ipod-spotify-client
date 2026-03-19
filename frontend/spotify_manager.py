@@ -291,6 +291,7 @@ def play_artist(artist_uri, device_id = None):
     print(response)
 
 def play_track(track_uri, device_id = None):
+    print("playing ", track_uri)
     if (not device_id):
         devices = DATASTORE.getAllSavedDevices()
         if (len(devices) == 0):
@@ -298,6 +299,7 @@ def play_track(track_uri, device_id = None):
             return
         device_id = devices[0].id
     sp.start_playback(device_id=device_id, uris=[track_uri])
+    refresh_now_playing()
 
 def play_episode(episode_uri, device_id = None):
     if(not device_id):
@@ -360,14 +362,19 @@ def get_now_playing_track(response = None):
         'track_index': -1,
         'timestamp': time.time()
     }
-    if not context:
+    if not context or context['type'] == 'collection':
+        now_playing['track_index'] = DATASTORE.getSavedTrackIndex(track_uri) + 1
+        now_playing['track_total'] = DATASTORE.getSavedTrackCount()
+        now_playing['context_name'] = 'collection'
         return now_playing
     if (context['type'] == 'playlist'):
         uri = context['uri']
         playlist = DATASTORE.getPlaylistUri(uri)
         tracks = DATASTORE.getPlaylistTracks(uri)
-        if (not playlist):
+        if (not playlist or not tracks):
             playlist, tracks = get_playlist(uri.split(":")[-1])
+            if not tracks:
+                return None
             DATASTORE.setPlaylist(playlist, tracks)
         now_playing['track_index'] = next(x for x, val in enumerate(tracks) 
                                   if val.uri == track_uri) + 1
