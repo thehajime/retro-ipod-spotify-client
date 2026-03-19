@@ -564,10 +564,13 @@ parser = argparse.ArgumentParser(
 )
 
 parser.add_argument('--refresh', action='store_true', help="refresh local cache via Spotify API (takes long)")
+parser.add_argument('--debug', action='store_true', help="enable debug (spotipi library)")
 args = parser.parse_args()
 
 if args.refresh:
     spotify_manager.refresh_data()
+if args.debug:
+    spotify_manager.enable_spotipi()
 
 def app_main_loop():
     global app, page, loop_count, last_interaction, screen_on

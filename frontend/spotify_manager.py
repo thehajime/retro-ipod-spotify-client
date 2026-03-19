@@ -4,6 +4,7 @@ from spotipy.oauth2 import SpotifyOAuth
 import threading
 import time
 import json
+import logging
 
 class UserDevice():
     __slots__ = ['id', 'name', 'is_active']
@@ -475,6 +476,11 @@ def bg_loop():
         refresh_now_playing()
         time.sleep(sleep_time)
         sleep_time = min(4, sleep_time * 2)
+
+def enable_spotipi():
+    logging.basicConfig(level=logging.DEBUG)
+    spotipy.trace = True
+    spotipy.trace_out = True
 
 sleep_time = 0.3
 thread = threading.Thread(target=bg_loop, args=())
