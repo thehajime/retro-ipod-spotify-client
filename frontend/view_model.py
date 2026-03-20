@@ -525,8 +525,8 @@ class RootPage(MenuPage):
             PlaylistsPage(self),
             ShowsPage(self),
             SearchPage(self),
-            NowPlayingPage(self, "Now Playing", NowPlayingCommand()),
-            SysUtilPage(self)
+            SysUtilPage(self),
+            NowPlayingPage(self, "Now Playing", NowPlayingCommand())
         ]
         self.index = 0
         self.page_start = 0
