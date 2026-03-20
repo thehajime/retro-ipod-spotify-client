@@ -1,6 +1,8 @@
 import spotify_manager
 import re as re
 from functools import lru_cache 
+from sys import platform
+import os
 
 MENU_PAGE_SIZE = 6
 
@@ -502,6 +504,17 @@ class PlaceHolderPage(MenuPage):
     def __init__(self, header, previous_page, has_sub_page=True, is_title = False):
         super().__init__(header, previous_page, has_sub_page, is_title)
 
+class SysUtilPage(MenuPage):
+    def __init__(self, previous_page):
+        super().__init__("sysutil", previous_page, has_sub_page=True)
+
+    def render(self):
+        r = super().render()
+        print('going to poweroff on linux')
+        if (platform == 'linux'):
+            os.system('sudo halt')
+        return r
+
 class RootPage(MenuPage):
     def __init__(self, previous_page):
         super().__init__("sPot", previous_page, has_sub_page=True)
@@ -512,7 +525,8 @@ class RootPage(MenuPage):
             PlaylistsPage(self),
             ShowsPage(self),
             SearchPage(self),
-            NowPlayingPage(self, "Now Playing", NowPlayingCommand())
+            NowPlayingPage(self, "Now Playing", NowPlayingCommand()),
+            SysUtilPage(self)
         ]
         self.index = 0
         self.page_start = 0
