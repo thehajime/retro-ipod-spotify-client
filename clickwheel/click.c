@@ -157,7 +157,7 @@ void onDataEdge(int gpio, int level, uint32_t tick) {
     dataBit = level;
 }
 
-int main(void *args){
+int main(int argc, char **argv){
   
     // Creating socket file descriptor 
     if ( (sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) { 
@@ -196,8 +196,6 @@ int main(void *args){
     gpioSetAlertFunc(CLOCK_PIN, onClockEdge);
     gpioSetAlertFunc(DATA_PIN, onDataEdge);
 
-    while(1) {
-	    usleep(10);
-    };
+    pause();
     gpioTerminate();
 }
