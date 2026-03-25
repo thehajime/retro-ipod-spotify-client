@@ -504,16 +504,38 @@ class PlaceHolderPage(MenuPage):
     def __init__(self, header, previous_page, has_sub_page=True, is_title = False):
         super().__init__(header, previous_page, has_sub_page, is_title)
 
-class SysUtilPage(MenuPage):
-    def __init__(self, previous_page):
-        super().__init__("sysutil", previous_page, has_sub_page=True)
+class CommandPage(MenuPage):
+    def __init__(self, header, previous_page, has_sub_page=True, is_title = False, command = None):
+        super().__init__(header, previous_page, has_sub_page, is_title)
+        self.command = command
+        print('init')
 
     def render(self):
         r = super().render()
-        print('going to poweroff on linux')
+        print('going to call: ', self.command)
         if (platform == 'linux'):
-            os.system('sudo halt')
+            os.system(self.command)
         return r
+
+class SysUtilPage(MenuPage):
+    def __init__(self, previous_page):
+        super().__init__("System", previous_page, has_sub_page=True)
+
+        self.pages = [
+            CommandPage("Power Off", self, has_sub_page=True,
+                        command='sudo halt'),
+            PlaceHolderPage("Bluetooth (dummy)", self, has_sub_page=True),
+            PlaceHolderPage("Volume (dummy)", self, has_sub_page=True),
+            PlaceHolderPage("Wifi (dummy)", self, has_sub_page=True),
+            CommandPage("Software Update", self, has_sub_page=False,
+                        command='cd retro-ipod-spotify-client; git pull'),
+            ]
+
+    def total_size(self):
+        return len(self.pages)
+
+    def page_at(self, index):
+        return self.pages[index]
 
 class RootPage(MenuPage):
     def __init__(self, previous_page):
