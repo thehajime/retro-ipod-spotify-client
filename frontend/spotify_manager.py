@@ -337,6 +337,17 @@ def play_from_show(show_uri, episode_uri, device_id = None):
     sp.start_playback(device_id=device_id, context_uri=show_uri, offset={"uri": episode_uri})
     refresh_now_playing()
 
+def play_from_saved_tracks(list_uris, index = 0, device_id = None):
+    print("playing ", list_uris[index])
+    if(not device_id):
+        devices = DATASTORE.getAllSavedDevices()
+        if (len(devices) == 0):
+            print("error! no devices")
+            return
+        device_id = devices[0].id
+    sp.start_playback(device_id=device_id, context_uri=None, uris=list_uris, offset={'position': index})
+    refresh_now_playing()
+
 def get_now_playing():
     response = check_internet(lambda: sp.current_playback(additional_types='episode'))
     if (not response):

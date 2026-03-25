@@ -496,9 +496,9 @@ class SavedTracksPage(MenuPage):
 
     def page_at(self, index):
         # play track
-        track = spotify_manager.DATASTORE.getSavedTrack(index)
-        command = NowPlayingCommand(lambda: spotify_manager.play_track(track.uri, None))
-        return NowPlayingPage(self, track.title, command)
+        tracks = spotify_manager.DATASTORE.getAllSavedTracks()
+        command = NowPlayingCommand(lambda: spotify_manager.play_from_saved_tracks(tracks, index, None))
+        return NowPlayingPage(self, spotify_manager.DATASTORE.getSavedTrack(index).title, command)
 
 class PlaceHolderPage(MenuPage):
     def __init__(self, header, previous_page, has_sub_page=True, is_title = False):
