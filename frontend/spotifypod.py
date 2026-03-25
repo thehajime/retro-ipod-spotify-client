@@ -47,12 +47,12 @@ screen_on = True
 def screen_sleep():
     global screen_on
     screen_on = False
-    os.system('xset -display :0 dpms force off')
+    os.system('xrandr --verbose --output Unknown19-1 --off')
 
 def screen_wake():
     global screen_on
     screen_on = True
-    os.system('xset -display :0 dpms force on')
+    os.system('xrandr --verbose --output Unknown19-1 --auto')
 
 def flattenAlpha(img):
     global SCALE
