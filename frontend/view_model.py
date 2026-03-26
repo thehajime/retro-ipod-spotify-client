@@ -2,6 +2,7 @@ import spotify_manager
 import re as re
 from functools import lru_cache 
 from sys import platform
+import sys
 import os
 import subprocess
 
@@ -513,9 +514,16 @@ class SystemCommand():
         self.is_multi = is_multi
         self.allowed_platform = allowed_platform
 
+    def restart_program(self):
+        os.execv(sys.executable, ['python'] + sys.argv)
+
     def run(self):
         global cmd_results
         #print('going to call: ', self.command)
+
+        if self.command[0] == 'restart_process':
+            self.restart_program()
+
         if self.allowed_platform and platform not in self.allowed_platform:
             cmd_results = subprocess.run(['/bin/echo', 'the command:', ' '.join(self.command),
                                           "isn't allowed to execute on", platform],
@@ -593,11 +601,12 @@ class SysUtilPage(MenuPage):
         super().__init__("System", previous_page, has_sub_page=True)
 
         self.pages = [
-            CommandPage("Power Off", self, SystemCommand(['sudo', 'halt'],
-                                                         allowed_platform = ['linux'])),
             PlaceHolderPage("Bluetooth (dummy)", self, has_sub_page=True),
             PlaceHolderPage("Volume (dummy)", self, has_sub_page=True),
             PlaceHolderPage("Wifi (dummy)", self, has_sub_page=True),
+            CommandPage("Restart Process", self, SystemCommand(['restart_process'])),
+            CommandPage("Power Off", self, SystemCommand(['sudo', 'halt'],
+                                                         allowed_platform = ['linux'])),
             CommandPage("Software Update", self,
                         command=SystemCommand(['cd', 'retro-ipod-spotify-client', ';', 'git', 'pull'], True)),
             ]
