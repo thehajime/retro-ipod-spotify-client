@@ -14,9 +14,12 @@ from PIL import ImageTk, Image
 from sys import platform
 import os
 import argparse
+from tkinter.scrolledtext import ScrolledText
+import sys
 
 LARGEFONT =("ChicagoFLF", 90) 
 MED_FONT =("ChicagoFLF", 70) 
+LOG_FONT = ("Courier New", 40)
 SCALE = 1
 SPOT_GREEN = "#FFC72E" #255,199,46
 SPOT_BLACK = "#191414"
@@ -84,7 +87,7 @@ class tkinterApp(tk.Tk):
       
     # __init__ function for class tkinterApp  
     def __init__(self, *args, **kwargs):  
-        global LARGEFONT, MED_FONT, SCALE
+        global LARGEFONT, MED_FONT, LOG_FONT, SCALE
         # __init__ function for class Tk 
         tk.Tk.__init__(self, *args, **kwargs)
 
@@ -97,31 +100,32 @@ class tkinterApp(tk.Tk):
 
         LARGEFONT =("ChicagoFLF", int(66 * SCALE))
         MED_FONT =("ChicagoFLF", int(52 * SCALE))
+        LOG_FONT = ("Courier New", int(40 * SCALE))
         # creating a container 
         container = tk.Frame(self)   
         container.pack(side = "top", fill = "both", expand = True)  
-   
+
         container.grid_rowconfigure(0, weight = 1) 
         container.grid_columnconfigure(0, weight = 1) 
-   
+
         # initializing frames to an empty array 
-        self.frames = {}   
-   
-        # iterating through a tuple consisting 
-        # of the different page layouts 
-        for F in (StartPage, NowPlayingFrame, SearchFrame): 
-   
-            frame = F(container, self) 
-   
+        self.frames = {}
+
+        # iterating through a tuple consisting
+        # of the different page layouts
+        for F in (StartPage, NowPlayingFrame, SearchFrame, CommandOutputFrame):
+
+            frame = F(container, self)
+
             # initializing frame of that object from 
             # startpage, page1, page2 respectively with  
             # for loop 
             self.frames[F] = frame  
-   
+
             frame.grid(row = 0, column = 0, sticky ="nsew") 
-   
+
         self.show_frame(StartPage) 
-   
+
     # to display the current frame passed as 
     # parameter 
     def show_frame(self, cont): 
@@ -298,8 +302,28 @@ class NowPlayingFrame(tk.Frame):
             return
         context_str = str(now_playing['track_index']) + " of " + str(now_playing['track_total'])
         self.context_label.configure(text=context_str)
-        
-   
+
+class CommandOutputFrame(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+        self.configure(bg=SPOT_BLACK)
+        self.header_label = tk.Label(self, text ="console", font = LARGEFONT, background=SPOT_BLACK, foreground=SPOT_GREEN)
+        self.header_label.grid(row=0, column=0)
+        self.grid_columnconfigure(0, weight=1)
+        self.log_widget = ScrolledText(self, height=int(68 * SCALE),
+                                       font = LOG_FONT, background=SPOT_BLACK, foreground=SPOT_GREEN)
+        self.log_widget.configure(highlightbackground=SPOT_BLACK)
+        self.log_widget.grid(row=1, column=0, sticky='s')
+
+    def clear_text(self):
+        self.log_widget.config(state='normal')
+        self.log_widget.delete('1.0', tk.END)
+        self.log_widget.config(state='disabled')
+
+    def update_console(self, results):
+        self.clear_text()
+        print(results)
+
 class StartPage(tk.Frame): 
     def __init__(self, parent, controller):  
         tk.Frame.__init__(self, parent) 
@@ -335,7 +359,7 @@ class StartPage(tk.Frame):
         
         self.listItems = []
         self.arrows=[]
-        for x in range(6):
+        for x in range(MENU_PAGE_SIZE):
             item = tk.Label(listFrame, text =" " + str(x), justify=tk.LEFT, anchor="w", font = LARGEFONT, background=SPOT_BLACK, foreground=SPOT_GREEN, padx=(30 * SCALE))
             label = tk.Label(listFrame, text=" >", font = LARGEFONT, background=SPOT_BLACK, foreground=SPOT_GREEN)
             label.grid(row=x, column=1, sticky="nsw", padx = (0, 30))
@@ -488,6 +512,35 @@ def render_now_playing(app, now_playing_render):
     app.show_frame(NowPlayingFrame)
     now_playing_render.subscribe(app, update_now_playing)
 
+class PrintLogger(object):  # create file like object
+    def __init__(self, textbox):  # pass reference to text widget
+        self.textbox = textbox  # keep ref
+
+    def write(self, text):
+        self.textbox.configure(state="normal")  # make field editable
+        self.textbox.insert("end", text)  # write text to textbox
+        self.textbox.see("end")  # scroll to end
+        self.textbox.configure(state="disabled")  # make field readonly
+
+    def flush(self):  # needed for file like object
+        pass
+
+def update_cmd_output(results):
+    frame = app.frames[CommandOutputFrame]
+    frame.update_console(results.stdout)
+    sys.stdout = sys.__stdout__
+    sys.stderr = sys.__stderr__
+
+def render_cmd_output(app, cmd_output_render):
+    app.show_frame(CommandOutputFrame)
+    frame = app.frames[CommandOutputFrame]
+    logger = PrintLogger(frame.log_widget)
+    sys.stdout = logger
+    sys.stderr = logger
+    cmd_output_render.subscribe(app, update_cmd_output)
+    sys.stdout = sys.__stdout__
+    sys.stderr = sys.__stderr__
+
 def render(app, render):
     if (render.type == MENU_RENDER_TYPE):
         render_menu(app, render)
@@ -495,6 +548,8 @@ def render(app, render):
         render_now_playing(app, render)
     elif (render.type == SEARCH_RENDER):
         render_search(app, render)
+    elif (render.type == CMD_OUTPUT_RENDER):
+        render_cmd_output(app, render)
 
 def onPlayPressed():
     global page, app

@@ -3,6 +3,7 @@ import re as re
 from functools import lru_cache 
 from sys import platform
 import os
+import subprocess
 
 MENU_PAGE_SIZE = 6
 
@@ -10,6 +11,7 @@ MENU_PAGE_SIZE = 6
 MENU_RENDER_TYPE = 0
 NOW_PLAYING_RENDER = 1
 SEARCH_RENDER = 2
+CMD_OUTPUT_RENDER = 3
 
 # Menu line item types
 LINE_NORMAL = 0
@@ -504,31 +506,100 @@ class PlaceHolderPage(MenuPage):
     def __init__(self, header, previous_page, has_sub_page=True, is_title = False):
         super().__init__(header, previous_page, has_sub_page, is_title)
 
-class CommandPage(MenuPage):
-    def __init__(self, header, previous_page, has_sub_page=True, is_title = False, command = None):
-        super().__init__(header, previous_page, has_sub_page, is_title)
+class SystemCommand():
+    def __init__(self, command = [], is_multi = False, allowed_platform = []):
+        self.has_run = False
         self.command = command
-        print('init')
+        self.is_multi = is_multi
+        self.allowed_platform = allowed_platform
+
+    def run(self):
+        global cmd_results
+        #print('going to call: ', self.command)
+        if self.allowed_platform and platform not in self.allowed_platform:
+            cmd_results = subprocess.run(['/bin/echo', 'the command:', ' '.join(self.command),
+                                          "isn't allowed to execute on", platform],
+                                     stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+            return
+        if not self.is_multi:
+            self.has_run = True
+        cmd_results = subprocess.run(self.command,
+                                     stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+
+class CommandOutputRendering(Rendering):
+    def __init__(self, results):
+        super().__init__(CMD_OUTPUT_RENDER)
+        self.callback = None
+        self.results = results
+
+    def subscribe(self, app, callback):
+        if callback == self.callback:
+            return
+        new_callback = self.callback is None
+        self.callback = callback
+        self.app = app
+        if new_callback:
+            self.refresh()
+
+    def refresh(self):
+        global cmd_result
+        if not self.callback:
+            return
+        self.callback(cmd_results)
+
+    def unsubscribe(self):
+        super().unsubscribe()
+        self.callback = None
+        self.app = None
+
+class CommandPage(MenuPage):
+    def __init__(self, header, previous_page, command):
+        self.has_sub_page = True
+        self.previous_page = previous_page
+        super().__init__(command, previous_page, has_sub_page=True)
+        self.header = header
+        self.is_title = False
+        self.command = command
+        self.live_render = CommandOutputRendering("")
+
+    def nav_prev(self):
+        pass
+
+    def nav_next(self):
+        pass
+
+    def nav_play(self):
+        pass
+
+    def nav_up(self):
+        pass
+
+    def nav_down(self):
+        pass
+
+    def nav_select(self):
+        return self
+
+    def nav_back(self):
+        return self.previous_page
 
     def render(self):
-        r = super().render()
-        print('going to call: ', self.command)
-        if (platform == 'linux'):
-            os.system(self.command)
-        return r
+        if (not self.command.has_run):
+            self.command.run()
+        return self.live_render
 
 class SysUtilPage(MenuPage):
     def __init__(self, previous_page):
         super().__init__("System", previous_page, has_sub_page=True)
 
         self.pages = [
-            CommandPage("Power Off", self, has_sub_page=True,
-                        command='sudo halt'),
+            CommandPage("Power Off", self, SystemCommand(['sudo', 'halt'],
+                                                         allowed_platform = ['linux'])),
             PlaceHolderPage("Bluetooth (dummy)", self, has_sub_page=True),
             PlaceHolderPage("Volume (dummy)", self, has_sub_page=True),
             PlaceHolderPage("Wifi (dummy)", self, has_sub_page=True),
-            CommandPage("Software Update", self, has_sub_page=False,
-                        command='cd retro-ipod-spotify-client; git pull'),
+            CommandPage("Software Update", self,
+                        command=SystemCommand(['cd', 'retro-ipod-spotify-client', ';', 'git', 'pull'], True)),
             ]
 
     def total_size(self):
