@@ -163,6 +163,9 @@ def get_playlist_tracks(id, owner):
     else:
         # XXX: 2603 can't retrieve items of followed playlist... will be fixed
         #results = sp.playlist(id, fields='items', market="JP")
+        # more note: public playlist is only allowed for extended quota mode
+        # (which is not for individuals) , while
+        # i'm using developer mode, which has restrictions for this.
         return tracks
 
     for _, item in enumerate(results['items']):
