@@ -604,6 +604,8 @@ class BluetoothPage(MenuPage):
         self.get_devices()
 
     def get_devices(self):
+        if platform != 'linux':
+            return
         cmd_out = subprocess.run(['bluetoothctl', 'devices'], stdout=subprocess.PIPE, text=True)
         lines = cmd_out.stdout.splitlines()
         for line in lines:
@@ -617,6 +619,8 @@ class BluetoothPage(MenuPage):
 
     def nav_select(self):
         print('bluetoothctl connect', self.pages[self.index].header)
+        # need to disconnect
+        os.system('bluetoothctl disconnect')
         os.system('bluetoothctl connect ' + self.pages[self.index].header)
         return self
 
