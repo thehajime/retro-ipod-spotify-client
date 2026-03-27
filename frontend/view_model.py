@@ -596,12 +596,36 @@ class CommandPage(MenuPage):
             self.command.run()
         return self.live_render
 
+class BluetoothPage(MenuPage):
+    def __init__(self, previous_page):
+        super().__init__("Bluetooth", previous_page, has_sub_page=True)
+        self.is_title = False
+        self.pages = []
+        self.get_devices()
+
+    def get_devices(self):
+        cmd_out = subprocess.run(['bluetoothctl', 'devices'], text=True)
+        lines = cmd_out.stdout.splitlines()
+        for line in lines:
+            self.pages.append(PlaceHolderPage(line.split()[1],self, has_sub_page=False))
+
+    def total_size(self):
+        return len(self.pages)
+
+    def page_at(self, index):
+        return self.pages[index]
+
+    def nav_select(self):
+        print('bluetoothctl connect', self.pages[self.index].header)
+        os.system('bluetoothctl connect' + self.pages[self.index].header)
+        return self
+
 class SysUtilPage(MenuPage):
     def __init__(self, previous_page):
         super().__init__("System", previous_page, has_sub_page=True)
 
         self.pages = [
-            PlaceHolderPage("Bluetooth (dummy)", self, has_sub_page=True),
+            BluetoothPage(self),
             PlaceHolderPage("Volume (dummy)", self, has_sub_page=True),
             PlaceHolderPage("Wifi (dummy)", self, has_sub_page=True),
             CommandPage("Restart Process", self, SystemCommand(['restart_process'])),
