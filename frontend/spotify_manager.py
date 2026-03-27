@@ -228,7 +228,7 @@ def refresh_data():
         track = item['track']
         DATASTORE.setSavedTrack(idx + offset, UserTrack(track['name'], track['artists'][0]['name'], track['album']['name'], track['uri']))
 
-    print("Spotify tracks fetched")
+    print("Spotify saved tracks fetched: " + str(DATASTORE.getSavedTrackCount()))
 
     offset = 0
     results = sp.current_user_followed_artists(limit=pageSize)
@@ -248,6 +248,8 @@ def refresh_data():
     while(results['next']):
         offset = results['offset']
         for idx, item in enumerate(results['items']):
+            if sp.me()['id'] != item['owner']['id']:
+                continue
             tracks = get_playlist_tracks(item['id'], item['owner']['id'])
             DATASTORE.setPlaylist(UserPlaylist(item['name'], totalindex, item['uri'], len(tracks)), tracks, index=idx + offset)
             totalindex = totalindex + 1
@@ -255,6 +257,8 @@ def refresh_data():
 
     offset = results['offset']
     for idx, item in enumerate(results['items']):
+        if sp.me()['id'] != item['owner']['id']:
+            continue
         tracks = get_playlist_tracks(item['id'], item['owner']['id'])
         DATASTORE.setPlaylist(UserPlaylist(item['name'], totalindex, item['uri'], len(tracks)), tracks, index=idx + offset)
         totalindex = totalindex + 1
