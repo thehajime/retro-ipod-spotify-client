@@ -604,7 +604,7 @@ class BluetoothPage(MenuPage):
         self.get_devices()
 
     def get_devices(self):
-        cmd_out = subprocess.run(['bluetoothctl', 'devices'], text=True)
+        cmd_out = subprocess.run(['bluetoothctl', 'devices'], stdout=subprocess.PIPE, text=True)
         lines = cmd_out.stdout.splitlines()
         for line in lines:
             self.pages.append(PlaceHolderPage(line.split()[1],self, has_sub_page=False))
@@ -617,7 +617,7 @@ class BluetoothPage(MenuPage):
 
     def nav_select(self):
         print('bluetoothctl connect', self.pages[self.index].header)
-        os.system('bluetoothctl connect' + self.pages[self.index].header)
+        os.system('bluetoothctl connect ' + self.pages[self.index].header)
         return self
 
 class SysUtilPage(MenuPage):
