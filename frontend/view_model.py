@@ -609,7 +609,8 @@ class BluetoothPage(MenuPage):
         cmd_out = subprocess.run(['bluetoothctl', 'devices'], stdout=subprocess.PIPE, text=True)
         lines = cmd_out.stdout.splitlines()
         for line in lines:
-            self.pages.append(PlaceHolderPage(line.split()[1],self, has_sub_page=False))
+            label = line.split()[2:] + line.split()[1]
+            self.pages.append(PlaceHolderPage(label, self, has_sub_page=False))
 
     def total_size(self):
         return len(self.pages)
