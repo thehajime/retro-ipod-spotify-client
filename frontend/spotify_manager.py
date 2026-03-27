@@ -110,6 +110,8 @@ def check_internet(request):
     global has_internet
     try:
         result = request()
+        if not has_internet:
+            refresh_devices()
         has_internet = True
     except Exception as _:
         print("no ints")
@@ -187,7 +189,11 @@ def get_album_tracks(id):
     return tracks
 
 def refresh_devices():
-    results = sp.devices()
+    try:
+        results = sp.devices()
+    except Exception as _:
+        return None
+
     DATASTORE.clearDevices()
     for _, item in enumerate(results['devices']):
         if "go-librespot" in item['name']:
@@ -358,6 +364,7 @@ def play_from_saved_tracks(list_uris, index = 0, device_id = None):
 def get_now_playing():
     response = check_internet(lambda: sp.current_playback(additional_types='episode'))
     if (not response):
+        print("no ints")
         return None
 
     if (response['currently_playing_type'] == 'episode'):
