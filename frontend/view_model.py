@@ -609,7 +609,7 @@ class BluetoothPage(MenuPage):
         cmd_out = subprocess.run(['bluetoothctl', 'devices'], stdout=subprocess.PIPE, text=True)
         lines = cmd_out.stdout.splitlines()
         for line in lines:
-            label = line.split()[2:] + line.split()[1]
+            label = ' '.join(line.split()[2:]) + " " + line.split()[1]
             self.pages.append(PlaceHolderPage(label, self, has_sub_page=False))
 
     def total_size(self):
@@ -619,10 +619,10 @@ class BluetoothPage(MenuPage):
         return self.pages[index]
 
     def nav_select(self):
-        print('bluetoothctl connect', self.pages[self.index].header)
+        print('bluetoothctl connect', self.pages[self.index].header.split()[-1])
         # need to disconnect
         os.system('bluetoothctl disconnect')
-        os.system('bluetoothctl connect ' + self.pages[self.index].header)
+        os.system('bluetoothctl connect ' + self.pages[self.index].header.split()[-1])
         return self
 
 class SysUtilPage(MenuPage):
