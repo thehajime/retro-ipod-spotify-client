@@ -364,7 +364,8 @@ def play_from_saved_tracks(list_uris, index = 0, device_id = None):
 def get_now_playing():
     response = check_internet(lambda: sp.current_playback(additional_types='episode'))
     if (not response):
-        print("no ints (get_now_playing)")
+        if not has_internet:
+            print("no ints (get_now_playing)")
         return None
 
     if (response['currently_playing_type'] == 'episode'):
