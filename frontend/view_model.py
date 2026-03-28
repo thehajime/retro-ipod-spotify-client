@@ -523,6 +523,9 @@ class SystemCommand():
 
         if self.command[0] == 'restart_process':
             self.restart_program()
+        elif self.command[0] == 'refresh_data':
+            spotify_manager.refresh_devices()
+            return
 
         if self.allowed_platform and platform not in self.allowed_platform:
             cmd_results = subprocess.run(['/bin/echo', 'the command:', ' '.join(self.command),
@@ -638,6 +641,8 @@ class SysUtilPage(MenuPage):
                                                          allowed_platform = ['linux'])),
             CommandPage("Software Update", self,
                         command=SystemCommand(['cd', 'retro-ipod-spotify-client', ';', 'git', 'pull'], True)),
+            CommandPage("Test", self, SystemCommand(['ls', '-F'])),
+            CommandPage("Refresh Library", self, SystemCommand(['refresh_data'])),
             ]
 
     def total_size(self):
