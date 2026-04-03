@@ -234,6 +234,7 @@ def refresh_data():
         track = item['track']
         DATASTORE.setSavedTrack(idx + offset, UserTrack(track['name'], track['artists'][0]['name'], track['album']['name'], track['uri']))
 
+    DATASTORE.setSavedTrackUris()
     print("Spotify saved tracks fetched: " + str(DATASTORE.getSavedTrackCount()))
 
     offset = 0
