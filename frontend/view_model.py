@@ -633,14 +633,42 @@ class BluetoothPage(MenuPage):
         os.system('bluetoothctl connect ' + self.pages[self.index].header.split()[-1])
         return self
 
+class WifiPage(MenuPage):
+    def __init__(self, previous_page):
+        super().__init__("Wifi", previous_page, has_sub_page=True)
+        self.is_title = False
+        self.pages = []
+        self.get_aps()
+
+    def get_aps(self):
+        if platform != 'linux':
+            return
+        cmd_out = subprocess.run(['nmcli', 'connection', 'show'], stdout=subprocess.PIPE, text=True)
+        lines = cmd_out.stdout.splitlines()
+        for line in lines:
+            if re.search(r'wifi', line):
+                label = line.split()[0]
+                self.pages.append(PlaceHolderPage(label, self, has_sub_page=False))
+
+    def total_size(self):
+        return len(self.pages)
+
+    def page_at(self, index):
+        return self.pages[index]
+
+    def nav_select(self):
+        print('wifi connectting', self.pages[self.index].header.split()[-1])
+        os.system('nmcli connection up ' + self.pages[self.index].header)
+        return self
+
 class SysUtilPage(MenuPage):
     def __init__(self, previous_page):
         super().__init__("System", previous_page, has_sub_page=True)
 
         self.pages = [
             BluetoothPage(self),
+            WifiPage(self),
             PlaceHolderPage("Volume (dummy)", self, has_sub_page=True),
-            PlaceHolderPage("Wifi (dummy)", self, has_sub_page=True),
             CommandPage("Restart Process", self, SystemCommand(['restart_process'])),
             CommandPage("Power Off", self, SystemCommand(['sudo', 'halt'],
                                                          allowed_platform = ['linux'])),
