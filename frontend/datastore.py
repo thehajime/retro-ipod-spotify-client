@@ -159,6 +159,8 @@ class Datastore():
 
     def getAllSavedTracks(self):
         pickled_pl = self.r.get("track-uris")
+        if (pickled_pl is None):
+            return None
         return pickle.loads(pickled_pl)
 
     def setUserDevice(self, device):

@@ -521,6 +521,7 @@ class PrintLogger(object):  # create file like object
         self.textbox.insert("end", text)  # write text to textbox
         self.textbox.see("end")  # scroll to end
         self.textbox.configure(state="disabled")  # make field readonly
+        sys.__stdout__.write(text)
 
     def flush(self):  # needed for file like object
         pass

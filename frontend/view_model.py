@@ -508,23 +508,29 @@ class PlaceHolderPage(MenuPage):
         super().__init__(header, previous_page, has_sub_page, is_title)
 
 class SystemCommand():
-    def __init__(self, command = [], is_multi = False, allowed_platform = []):
+    def __init__(self, command = [], allowed_platform = [], cwd = None):
         self.has_run = False
         self.command = command
-        self.is_multi = is_multi
         self.allowed_platform = allowed_platform
+        self.cwd = cwd
 
     def restart_program(self):
         os.execv(sys.executable, ['python'] + sys.argv)
 
     def run(self):
         global cmd_results
-        #print('going to call: ', self.command)
+        self.has_run = True
+        print('going to call: ', self.command)
 
         if self.command[0] == 'restart_process':
             self.restart_program()
+            cmd_results.stdout = "restart_program() done"
         elif self.command[0] == 'refresh_data':
-            spotify_manager.refresh_devices()
+            spotify_manager.refresh_data()
+            #spotify_manager.run_async(lambda: self.run_search(self.live_render.query))
+            cmd_results = subprocess.run(['/bin/echo'], stdout=subprocess.PIPE,
+                                          stderr=subprocess.STDOUT, text=True)
+            cmd_results.stdout = "refresh_data() done"
             return
 
         if self.allowed_platform and platform not in self.allowed_platform:
@@ -532,10 +538,9 @@ class SystemCommand():
                                           "isn't allowed to execute on", platform],
                                      stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
             return
-        if not self.is_multi:
-            self.has_run = True
         cmd_results = subprocess.run(self.command,
-                                     stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+                                     stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+                                     cwd=self.cwd)
 
 class CommandOutputRendering(Rendering):
     def __init__(self, results):
@@ -553,7 +558,7 @@ class CommandOutputRendering(Rendering):
             self.refresh()
 
     def refresh(self):
-        global cmd_result
+        global cmd_results
         if not self.callback:
             return
         self.callback(cmd_results)
@@ -640,7 +645,7 @@ class SysUtilPage(MenuPage):
             CommandPage("Power Off", self, SystemCommand(['sudo', 'halt'],
                                                          allowed_platform = ['linux'])),
             CommandPage("Software Update", self,
-                        command=SystemCommand(['cd', 'retro-ipod-spotify-client', ';', 'git', 'pull'], True)),
+                        command=SystemCommand(['git', 'pull'], cwd='retro-ipod-spotify-client')),
             CommandPage("Test", self, SystemCommand(['ls', '-F'])),
             CommandPage("Refresh Library", self, SystemCommand(['refresh_data'])),
             ]
